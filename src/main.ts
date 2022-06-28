@@ -9,7 +9,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   if (SWAGGER_ENABLE === 'true') {
-    console.log('Swagger enabled!')
     enableSwagger(app);
   }
 
