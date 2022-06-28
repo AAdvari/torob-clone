@@ -1,10 +1,11 @@
 {
-  "name": "ie",
-  "description": "ie-final",
-  "website": "",
-  "repository": "https://github.com/AAdvari/torob-clone",
+  "name": "ToolJet",
+  "description": "ToolJet is an open-source low-code framework to build and deploy internal tools.",
+  "website": "https://tooljet.io/",
+  "repository": "https://github.com/tooljet/tooljet",
+  "logo": "https://app.tooljet.io/assets/images/logo.svg",
   "success_url": "/",
-  "scripts": {
+  "scripts":{
     "predeploy": "npm install && npm run build"
   },
   "env": {
@@ -19,9 +20,7 @@
     }
   },
   "image": "heroku/nodejs",
-  "addons": [
-    "heroku-postgresql"
-  ],
+  "addons": ["heroku-postgresql"],
   "buildpacks": [
     {
       "url": "heroku/nodejs"
