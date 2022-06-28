@@ -8,7 +8,7 @@ import {TypeOrmConfig} from "./configs/typeorm.config";
 @Module({
     imports: [
         ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'swagger'),
+            rootPath: join(__dirname, 'swagger'),
             serveRoot: '/swagger',
         }),
         TypeOrmModule.forRoot(TypeOrmConfig),
