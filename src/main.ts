@@ -1,16 +1,20 @@
+import * as dotenv from 'dotenv';
+import {join} from "path";
+if(!process.env.NODE_ENV){
+  dotenv.config({path: join(__dirname, '..', '.env')});
+}
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { enableSwagger } from './plugins/swagger';
-import './plugins/dotenv';
-const {SWAGGER_ENABLE} = process.env;
 
-import './plugins/dotenv'
+
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  if (SWAGGER_ENABLE === 'true') {
+  if(process.env.SWAGGER_ENABLE === 'true')
     enableSwagger(app);
-  }
 
   await app.listen(process.env.PORT || 3000);
 }
