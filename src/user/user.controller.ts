@@ -3,6 +3,7 @@ import {CreateUserRequestDto} from "./dtos/requests/CreateUserRequest.dto";
 import {CreateUserResponseDto} from "./dtos/responses/CreateUserResponse.dto";
 import {UserService} from "./user.service";
 import {BusinessController} from "../common/decorators/bussines-controller.decorator";
+import {ApiBody} from "@nestjs/swagger";
 
 @BusinessController('user', 'user')
 export class UserController {

@@ -1,4 +1,6 @@
-import { Controller } from '@nestjs/common';
+import {BusinessController} from "../common/decorators/bussines-controller.decorator";
 
-@Controller('product')
-export class ProductController {}
+@BusinessController('product', 'product')
+export class ProductController {
+
+}
