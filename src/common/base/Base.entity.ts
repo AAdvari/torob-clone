@@ -11,11 +11,6 @@ export abstract class BaseEntity<T> {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ nullable: true })
-    createdById?: number;
-
-    @Column({ nullable: true })
-    updatedById?: number;
 
     @CreateDateColumn({
         nullable: false,

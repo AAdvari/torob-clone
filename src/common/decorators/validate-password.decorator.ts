@@ -18,7 +18,6 @@ export function IsValidPassword() {
                     let numericPresent: boolean = false;
                     for (let i = 0; i < value.length; i++) {
                         let char = value.charAt(i)
-                        console.log(char)
                         if (char >= '0' && char <= '9') {
                             numericPresent = true;
                             continue;
