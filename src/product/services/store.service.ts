@@ -1,4 +1,4 @@
-import {BadRequestException, Injectable, UnauthorizedException} from '@nestjs/common';
+import {BadRequestException, Injectable, NotFoundException, UnauthorizedException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {Repository} from "typeorm";
 import {Store} from "../entities/store.entity";
@@ -15,24 +15,25 @@ import {TabletProduct} from "../entities/products/tablet-product.entity";
 import {LaptopProduct} from "../entities/products/laptop-product.entity";
 import {AddLaptopProductToStoreRequestDto} from "../dtos/requests/AddLaptopProductToStoreRequest.dto";
 import {AddProductToStoreByIdRequestDto} from "../dtos/requests/AddProductToStoreByIdRequest.dto";
+import {GetFilteredProductsRequestDto} from "../dtos/requests/GetFilteredProductsRequest.dto";
+import {SortingTypes} from "../enums/sorting-types.enum";
 
 @Injectable()
 export class StoreService extends BaseService<Store> {
     constructor(
-                private readonly userService: UserService,
-                @InjectRepository(Store)
-                private readonly storeRepository: Repository<Store>,
-                @InjectRepository(SellingItem)
-                private readonly sellingItemRepository: Repository<SellingItem>,
-                @InjectRepository(Product)
-                private readonly productRepository: Repository<Product>,
-                @InjectRepository(MobileProduct)
-                private readonly mobileRepository: Repository<MobileProduct>,
-                @InjectRepository(LaptopProduct)
-                private readonly laptopRepository: Repository<LaptopProduct>,
-                @InjectRepository(TabletProduct)
-                private readonly tabletRepository: Repository<TabletProduct>,
-
+        private readonly userService: UserService,
+        @InjectRepository(Store)
+        private readonly storeRepository: Repository<Store>,
+        @InjectRepository(SellingItem)
+        private readonly sellingItemRepository: Repository<SellingItem>,
+        @InjectRepository(Product)
+        private readonly productRepository: Repository<Product>,
+        @InjectRepository(MobileProduct)
+        private readonly mobileRepository: Repository<MobileProduct>,
+        @InjectRepository(LaptopProduct)
+        private readonly laptopRepository: Repository<LaptopProduct>,
+        @InjectRepository(TabletProduct)
+        private readonly tabletRepository: Repository<TabletProduct>,
     ) {
         super(storeRepository);
     }
@@ -60,7 +61,8 @@ export class StoreService extends BaseService<Store> {
             }
         });
     }
-    async validateOwnershipAndGetStore(userId: number, storeId: number){
+
+    async validateOwnershipAndGetStore(userId: number, storeId: number) {
         const user = await this.userService.findUserById(userId);
         if (user.userType !== UserType.SELLER)
             throw new UnauthorizedException('only seller users can add products!');
@@ -71,11 +73,14 @@ export class StoreService extends BaseService<Store> {
                 owner: true
             }
         });
+        if (!store)
+            throw new NotFoundException('store with given id does not exist!')
         if (store.owner.id !== userId)
             throw new BadRequestException('the given user is not the owner of given store!')
         return store;
     }
-    async addExistingProductToStore(dto: AddProductToStoreByIdRequestDto, userId: number ){
+
+    async addExistingProductToStore(dto: AddProductToStoreByIdRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
         const product = await this.productRepository.findOne({where: {id: dto.productId}});
 
@@ -84,9 +89,11 @@ export class StoreService extends BaseService<Store> {
         sellingItem.store = store;
         sellingItem.price = dto.price;
         sellingItem.link = dto.link;
+        await this.sellingItemRepository.save(sellingItem);
 
         return product;
     }
+
     async addMobileTableToStore(dto: AddMobileTabletProductToStoreRequestDto, userId: number, type: ProductCategory) {
 
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
@@ -106,11 +113,10 @@ export class StoreService extends BaseService<Store> {
         device.memory = dto.memory;
         device.screen = dto.screen;
 
-        if (type === ProductCategory.MOBILE){
+        if (type === ProductCategory.MOBILE) {
             product.mobileProduct = device;
             await this.mobileRepository.save(device);
-        }
-        else {
+        } else {
             product.tabletProduct = device;
             await this.tabletRepository.save(device);
         }
@@ -127,7 +133,8 @@ export class StoreService extends BaseService<Store> {
 
         return device;
     }
-    async addLaptopToStore(dto: AddLaptopProductToStoreRequestDto, userId: number){
+
+    async addLaptopToStore(dto: AddLaptopProductToStoreRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
 
         let product = new Product();
@@ -156,5 +163,79 @@ export class StoreService extends BaseService<Store> {
         return device;
 
     }
+
+    async getStoresWithDetails(sellerId: number, stores?: number[]) {
+        let query = this.storeRepository.createQueryBuilder('store')
+            .andWhere('store.ownerId = :sellerId', {sellerId});
+        if (stores)
+            query = query.andWhere('store.id IN (...:stores)', {stores});
+
+        return await
+            query.leftJoinAndSelect('store.sellingItems', 'sellingItem')
+                .leftJoinAndSelect('sellingItem.product', 'product')
+                .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
+                .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
+                .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
+                .getMany();
+    }
+
+    async getFilteredProducts(dto: GetFilteredProductsRequestDto) {
+        let query = this.productRepository.createQueryBuilder('product')
+            .leftJoinAndSelect('product.sellingItems', 'sellingItem')
+            .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
+            .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
+            .leftJoinAndSelect('product.laptopProduct', 'laptopProduct');
+
+        if (dto.categories) {
+            query = query
+                .andWhere('product.productCategory IN (...:categories)', {categories: dto.categories});
+        }
+
+        if (dto.mobileAndTabletBrands) {
+            query = query
+                .andWhere('mobileProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands})
+                .andWhere('tabletProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands});
+        }
+
+        if (dto.laptopBrands) {
+            query = query
+                .andWhere('laptopProduct.brand IN (...:brands)', {brands: dto.laptopBrands});
+        }
+
+        let products = await query.getMany();
+        switch (dto.sortBy) {
+            case SortingTypes.PRICE_ASCENDING:
+                products =
+                    products.sort((p1, p2) => {
+                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
+                                return prev.price < curr.price ? prev : curr;
+                        });
+                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
+                            return prev.price < curr.price ? prev : curr;
+                        });
+                        return p1Cheapest.price - p2Cheapest.price;
+                    });
+                break;
+            case SortingTypes.PRICE_DESCENDING:
+                products =
+                    products.sort((p1, p2) => {
+                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
+                            return prev.price < curr.price ? prev : curr;
+                        });
+                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
+                            return prev.price < curr.price ? prev : curr;
+                        });
+                        return p2Cheapest.price - p1Cheapest.price;
+                    });
+                break;
+            case SortingTypes.DATE_DESCENDING:
+                products = products.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime())
+                break;
+            case SortingTypes.DATE_ASCENDING:
+                products = products.sort((p1, p2) => p1.createdAt.getTime() - p2.createdAt.getTime())
+        }
+        return products;
+    }
+
 
 }

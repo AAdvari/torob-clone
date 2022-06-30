@@ -1,5 +1,5 @@
 import {BusinessController} from "../../common/decorators/bussines-controller.decorator";
-import {Body, Post} from "@nestjs/common";
+import {Body, Get, Param, ParseIntPipe, Post} from "@nestjs/common";
 import {CreateStoreRequestDto} from "../dtos/requests/CreateStoreRequest.dto";
 import {GetUserId} from "../../common/decorators/get-user.id";
 import {Auth} from "../../common/decorators/auth-guard.decorator";
@@ -10,7 +10,9 @@ import {AddMobileTabletProductToStoreRequestDto} from "../dtos/requests/AddMobil
 import {MobileTabletResponseDto} from "../dtos/responses/MobileTabletResponse.dto";
 import {AddLaptopProductToStoreRequestDto} from "../dtos/requests/AddLaptopProductToStoreRequest.dto";
 import {ProductCategory} from "../enums/product-category.enum";
-import {AddLaptopProductToStoreResponse} from "../dtos/responses/LaptopProductResponse.dto";
+import {ProductResponseDto} from "../dtos/responses/ProductResponse.dto";
+import {LaptopProductResponseDto} from "../dtos/responses/LaptopProductResponse.dto";
+import {GetFilteredProductsRequestDto} from "../dtos/requests/GetFilteredProductsRequest.dto";
 
 @BusinessController('store', 'store')
 export class StoreController {
@@ -25,13 +27,15 @@ export class StoreController {
     @Post('add-product-by-id')
     @Auth()
     async addProductByIdToStore(@Body() dto: AddProductToStoreByIdRequestDto, @GetUserId() userId: number){
+        const product = await this.storeService.addExistingProductToStore(dto, userId);
+        return new ProductResponseDto(product);
     }
 
     @Post('add-new-laptop')
     @Auth()
     async addNewLaptopToStore(@Body() dto: AddLaptopProductToStoreRequestDto, @GetUserId() userId: number){
         const device = await this.storeService.addLaptopToStore(dto, userId);
-        return new AddLaptopProductToStoreResponse(device);
+        return new LaptopProductResponseDto(device);
     }
 
     @Post('add-new-tablet')
@@ -46,6 +50,19 @@ export class StoreController {
     async addNewMobileToStore(@Body() dto: AddMobileTabletProductToStoreRequestDto, @GetUserId() userId: number){
         const device = await this.storeService.addMobileTableToStore(dto, userId, ProductCategory.MOBILE);
         return new MobileTabletResponseDto(device);
+    }
+
+    @Get('get-filtered-products')
+    async getFilteredProducts(@Body() filterDto: GetFilteredProductsRequestDto){
+        const products = await this.storeService.getFilteredProducts(filterDto);
+        return products.map(prod => new ProductResponseDto(prod));
+    }
+
+    @Auth()
+    @Get('get-all-stores')
+    async getAllStores(@GetUserId() userId: number){
+        const stores = await this.storeService.getStoresWithDetails(userId);
+        return stores.map(store => new StoreResponseDto(store));
     }
 
 

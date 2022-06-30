@@ -1,7 +1,7 @@
 import {LaptopBrand} from "../../enums/laptop-brand.enum";
 import {LaptopProduct} from "../../entities/products/laptop-product.entity";
 
-export class AddLaptopProductToStoreResponse {
+export class LaptopProductResponseDto {
     id: number;
     title: string;
     brand: LaptopBrand;
