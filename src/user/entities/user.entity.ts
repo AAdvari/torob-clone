@@ -3,6 +3,7 @@ import {BaseEntity} from "../../common/base/Base.entity";
 import {UserType} from "../enums/user-type.enum";
 import {Store} from "../../product/entities/store.entity";
 import {Product} from "../../product/entities/product.entity";
+import {Report} from "../../product/entities/report.entity";
 
 
 @Entity()
@@ -38,4 +39,7 @@ export class User extends BaseEntity<User> {
 
     @OneToMany( () => Store, (store) => store.owner)
     stores: Store[];
+
+    @OneToMany(() => Report, (report) => report.reporter)
+    reports: Report[];
 }

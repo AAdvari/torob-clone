@@ -13,6 +13,9 @@ import {ProductCategory} from "../enums/product-category.enum";
 import {ProductResponseDto} from "../dtos/responses/ProductResponse.dto";
 import {LaptopProductResponseDto} from "../dtos/responses/LaptopProductResponse.dto";
 import {GetFilteredProductsRequestDto} from "../dtos/requests/GetFilteredProductsRequest.dto";
+import {ReportSellingItemRequestDto} from "../dtos/requests/ReportSellingItemRequest.dto";
+import {ReportResponseDto} from "../dtos/responses/ReportResponse.dto";
+import {GetReportsRequestDto} from "../dtos/requests/GetReportsRequest.dto";
 
 @BusinessController('store', 'store')
 export class StoreController {
@@ -52,11 +55,6 @@ export class StoreController {
         return new MobileTabletResponseDto(device);
     }
 
-    @Get('get-filtered-products')
-    async getFilteredProducts(@Body() filterDto: GetFilteredProductsRequestDto){
-        const products = await this.storeService.getFilteredProducts(filterDto);
-        return products.map(prod => new ProductResponseDto(prod));
-    }
 
     @Auth()
     @Get('get-all-stores')
@@ -65,30 +63,27 @@ export class StoreController {
         return stores.map(store => new StoreResponseDto(store));
     }
 
+
+
     @Auth()
-    @Post('add-product-to-favorites/:id')
-    async addToFavorites(@Param('id', ParseIntPipe) productId: number, @GetUserId() userId: number){
-        const product = await this.storeService.addProductToFavorites(productId, userId);
-        return new ProductResponseDto(product);
+    @Post('report-selling-item')
+    async reportSellingItem(@Body() dto: ReportSellingItemRequestDto, @GetUserId() userId: number){
+        const report = await this.storeService.reportSellingItem(dto, userId);
+        return new ReportResponseDto(report);
     }
 
     @Auth()
-    @Delete('delete-favorite/:id')
-    async deleteFromFavorites(@Param('id', ParseIntPipe) productId: number, @GetUserId() userId: number){
-        const product = await this.storeService.deleteProductFromFavorites(productId, userId);
-        return new ProductResponseDto(product);
+    @Get('get-all-reports')
+    async getAllReports(@GetUserId() sellerId: number) {
+        const reports = await this.storeService.getAllReports(sellerId);
+        return reports.map(rep => new ReportResponseDto(rep));
     }
 
     @Auth()
-    @Get('get-favorite-products')
-    async getFavoriteProducts(@GetUserId() userId: number){
-        const products = await this.storeService.getFavoriteProducts(userId);
-        return products.map(prod => new ProductResponseDto(prod));
+    @Get('get-reports')
+    async getReports(@Body() dto: GetReportsRequestDto, @GetUserId() sellerId: number){
+        const reports = await this.storeService.getReports(sellerId, dto);
+        return reports.map(rep => new ReportResponseDto(rep));
     }
 
-    @Get('get-detailed-product/:id')
-    async getDetailedProduct(@Param('id', ParseIntPipe) pid: number){
-        const product = await this.storeService.getProductDetails(pid);
-        return new ProductResponseDto(product);
-    }
 }

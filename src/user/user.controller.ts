@@ -3,7 +3,6 @@ import {CreateUserRequestDto} from "./dtos/requests/CreateUserRequest.dto";
 import {UserResponseDto} from "./dtos/responses/UserResponse.dto";
 import {UserService} from "./user.service";
 import {BusinessController} from "../common/decorators/bussines-controller.decorator";
-import {ApiBody} from "@nestjs/swagger";
 import {UpdateUserRequestDto} from "./dtos/requests/UpdateUserRequest.dto";
 import {Auth} from "../common/decorators/auth-guard.decorator";
 import {GetUserId} from "../common/decorators/get-user.id";

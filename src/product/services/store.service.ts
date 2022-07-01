@@ -15,8 +15,9 @@ import {TabletProduct} from "../entities/products/tablet-product.entity";
 import {LaptopProduct} from "../entities/products/laptop-product.entity";
 import {AddLaptopProductToStoreRequestDto} from "../dtos/requests/AddLaptopProductToStoreRequest.dto";
 import {AddProductToStoreByIdRequestDto} from "../dtos/requests/AddProductToStoreByIdRequest.dto";
-import {GetFilteredProductsRequestDto} from "../dtos/requests/GetFilteredProductsRequest.dto";
-import {SortingTypes} from "../enums/sorting-types.enum";
+import {Report} from "../entities/report.entity";
+import {ReportSellingItemRequestDto} from "../dtos/requests/ReportSellingItemRequest.dto";
+import {GetReportsRequestDto} from "../dtos/requests/GetReportsRequest.dto";
 
 @Injectable()
 export class StoreService extends BaseService<Store> {
@@ -34,6 +35,8 @@ export class StoreService extends BaseService<Store> {
         private readonly laptopRepository: Repository<LaptopProduct>,
         @InjectRepository(TabletProduct)
         private readonly tabletRepository: Repository<TabletProduct>,
+        @InjectRepository(Report)
+        private readonly reportRepository: Repository<Report>
     ) {
         super(storeRepository);
     }
@@ -168,99 +171,49 @@ export class StoreService extends BaseService<Store> {
 
         return await
             query.leftJoinAndSelect('store.sellingItems', 'sellingItem')
+                .leftJoinAndSelect('sellingItem.reports', 'report')
+                .leftJoinAndSelect('report.reporter', 'reporter')
                 .leftJoinAndSelect('sellingItem.product', 'product')
                 .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
                 .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
                 .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
                 .getMany();
     }
-    async getFilteredProducts(dto: GetFilteredProductsRequestDto) {
-        let query = this.productRepository.createQueryBuilder('product')
-            .leftJoinAndSelect('product.sellingItems', 'sellingItem')
-            .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
-            .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
-            .leftJoinAndSelect('product.laptopProduct', 'laptopProduct');
+    async reportSellingItem(dto: ReportSellingItemRequestDto, userId: number){
+        const sellingItem = await this.sellingItemRepository.findOneBy({id: dto.sellingItemId});
+        if (!sellingItem)
+            throw new NotFoundException('sellingItem with given id does not exist');
+        let user = await this.userService.findUserById(userId);
 
-        if (dto.categories) {
-            query = query
-                .andWhere('product.productCategory IN (...:categories)', {categories: dto.categories});
-        }
+        let report = new Report();
+        report.reporter = user;
+        report.sellingItem = sellingItem;
+        report.description = dto.description;
+        report.reportType = dto.reportType;
 
-        if (dto.mobileAndTabletBrands) {
-            query = query
-                .andWhere('mobileProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands})
-                .andWhere('tabletProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands});
-        }
+        report = await this.sellingItemRepository.save(report);
+        return report;
+    }
+    async getAllReports(sellerId: number){
+        return this.getReports(sellerId);
+    }
+    async getReports(sellerId: number, dto?: GetReportsRequestDto){
+        const user = await this.userService.findUserById(sellerId);
+        if (user.userType !== UserType.SELLER)
+            throw new BadRequestException('Only sellers can get their related reports');
 
-        if (dto.laptopBrands) {
-            query = query
-                .andWhere('laptopProduct.brand IN (...:brands)', {brands: dto.laptopBrands});
-        }
+        let query = this.reportRepository.createQueryBuilder('report')
+            .andWhere('owner.id = :sellerId', {sellerId});
+            if (dto)
+                query = query.andWhere('store.id IN (...:stores)', {stores: dto.storeIds});
 
-        let products = await query.getMany();
-        switch (dto.sortBy) {
-            case SortingTypes.PRICE_ASCENDING:
-                products =
-                    products.sort((p1, p2) => {
-                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
-                                return prev.price < curr.price ? prev : curr;
-                        });
-                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
-                        });
-                        return p1Cheapest.price - p2Cheapest.price;
-                    });
-                break;
-            case SortingTypes.PRICE_DESCENDING:
-                products =
-                    products.sort((p1, p2) => {
-                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
-                        });
-                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
-                        });
-                        return p2Cheapest.price - p1Cheapest.price;
-                    });
-                break;
-            case SortingTypes.DATE_DESCENDING:
-                products = products.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime())
-                break;
-            case SortingTypes.DATE_ASCENDING:
-                products = products.sort((p1, p2) => p1.createdAt.getTime() - p2.createdAt.getTime())
-        }
-        return products;
-    }
-    async getFavoriteProducts(userId: number){
-        const user = await this.userService.getUserFavoriteProducts(userId);
-        return user.favoriteProducts;
-    }
-    async addProductToFavorites(pid: number, userId: number){
-        const user = await this.userService.findUserById(userId);
-        const product = await this.productRepository.findOneBy({id: pid});
-        if (!product)
-            throw new NotFoundException('product with given id does not exist!');
-        user.favoriteProducts.push(product);
-        await this.userService.save(user);
-        return product;
-    }
-    async deleteProductFromFavorites(pid: number, userId: number){
-        const user = await this.userService.findUserById(userId);
-        const removingProduct = user.favoriteProducts.find(prod => prod.id === pid);
-        if (!removingProduct)
-            throw new BadRequestException('product with given id is not in favorite products!');
-        user.favoriteProducts.filter(prod => prod.id !== pid);
-        await this.userService.save(user);
-        return removingProduct;
-    }
-    async getProductDetails(pid: number){
-        return  this.productRepository.createQueryBuilder('product')
-            .andWhere('product.id = :pid', {pid})
-            .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
-            .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
-            .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
-            .leftJoinAndSelect('product.sellingItems', 'sellingItem')
+         return query
+            .leftJoinAndSelect('report.sellingItem', 'sellingItem')
+            .leftJoinAndSelect('report.reporter', 'reporter')
             .leftJoinAndSelect('sellingItem.store', 'store')
-            .getOne();
+            .leftJoinAndSelect('store.owner', 'owner')
+            .getMany();
+
     }
+
 }

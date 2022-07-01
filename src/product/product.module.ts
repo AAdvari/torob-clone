@@ -11,10 +11,11 @@ import {LaptopProduct} from "./entities/products/laptop-product.entity";
 import {MobileProduct} from "./entities/products/mobile-product.entity";
 import {TabletProduct} from "./entities/products/tablet-product.entity";
 import {UserModule} from "../user/user.module";
+import {Report} from "./entities/report.entity";
 
 @Module({
     imports: [TypeOrmModule.forFeature(
-        [Product, Store, SellingItem, LaptopProduct, MobileProduct, TabletProduct]),
+        [Product, Store, SellingItem, LaptopProduct, MobileProduct, TabletProduct, Report]),
         UserModule
     ],
     controllers: [ProductController, StoreController],
