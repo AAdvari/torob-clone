@@ -1,5 +1,5 @@
 import {BusinessController} from "../../common/decorators/bussines-controller.decorator";
-import {Body, Delete, Get, Param, ParseIntPipe, Post} from "@nestjs/common";
+import {Body, Get, Post} from "@nestjs/common";
 import {CreateStoreRequestDto} from "../dtos/requests/CreateStoreRequest.dto";
 import {GetUserId} from "../../common/decorators/get-user.id";
 import {Auth} from "../../common/decorators/auth-guard.decorator";
@@ -12,7 +12,6 @@ import {AddLaptopProductToStoreRequestDto} from "../dtos/requests/AddLaptopProdu
 import {ProductCategory} from "../enums/product-category.enum";
 import {ProductResponseDto} from "../dtos/responses/ProductResponse.dto";
 import {LaptopProductResponseDto} from "../dtos/responses/LaptopProductResponse.dto";
-import {GetFilteredProductsRequestDto} from "../dtos/requests/GetFilteredProductsRequest.dto";
 import {ReportSellingItemRequestDto} from "../dtos/requests/ReportSellingItemRequest.dto";
 import {ReportResponseDto} from "../dtos/responses/ReportResponse.dto";
 import {GetReportsRequestDto} from "../dtos/requests/GetReportsRequest.dto";

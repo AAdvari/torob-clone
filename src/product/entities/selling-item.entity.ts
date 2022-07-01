@@ -1,4 +1,4 @@
-import {Column, Entity, ManyToOne, OneToMany, OneToOne} from "typeorm";
+import {Column, Entity, ManyToOne, OneToMany} from "typeorm";
 import {BaseEntity} from "../../common/base/Base.entity";
 import {Product} from "./product.entity";
 import {Store} from "./store.entity";

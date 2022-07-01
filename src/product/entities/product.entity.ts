@@ -1,5 +1,5 @@
 import {BaseEntity} from "../../common/base/Base.entity";
-import {Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne} from "typeorm";
+import {Column, Entity, JoinColumn, ManyToMany, OneToMany, OneToOne} from "typeorm";
 import {MobileProduct} from "./products/mobile-product.entity";
 import {TabletProduct} from "./products/tablet-product.entity";
 import {LaptopProduct} from "./products/laptop-product.entity";

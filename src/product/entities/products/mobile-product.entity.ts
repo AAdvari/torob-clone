@@ -1,7 +1,6 @@
 import {BaseEntity} from "../../../common/base/Base.entity";
 import {Column, Entity, OneToOne} from "typeorm";
 import {Product} from "../product.entity";
-import {LaptopBrand} from "../../enums/laptop-brand.enum";
 import {MobileTabletBrand} from "../../enums/mobile-tablet-brand.enum";
 
 

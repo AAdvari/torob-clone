@@ -1,4 +1,4 @@
-import {Column, Entity, JoinColumn, ManyToOne, OneToOne} from "typeorm";
+import {Column, Entity, ManyToOne} from "typeorm";
 import {BaseEntity} from "../../common/base/Base.entity";
 import {ReportType} from "../enums/report-type.enum";
 import {User} from "../../user/entities/user.entity";

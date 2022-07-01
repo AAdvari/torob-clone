@@ -1,6 +1,4 @@
 import {Store} from "../../entities/store.entity";
-import {User} from "../../../user/entities/user.entity";
-import {SellingItem} from "../../entities/selling-item.entity";
 import {SellingItemResponseDto} from "./SellingItemResponse.dto";
 import {UserResponseDto} from "../../../user/dtos/responses/UserResponse.dto";
 

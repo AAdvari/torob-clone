@@ -1,4 +1,4 @@
-import {registerDecorator, ValidationOptions, ValidationArguments} from 'class-validator';
+import {registerDecorator, ValidationArguments} from 'class-validator';
 
 export function IsValidPassword() {
     return function (object: Object, propertyName: string) {

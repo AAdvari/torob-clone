@@ -11,16 +11,6 @@ export class BaseService<Entity extends BaseEntity<Entity>> {
     }
 
 
-    async delete(id: number) {
-        this.checkNullId(id);
-        const record = new this.Record();
-        record.id = id;
-        record.deletedAt = new Date();
-        const result = await this.repository.save(record);
-        this.checkNotFound(result);
-    }
-
-
     async save(entity: DeepPartial<Entity>): Promise<Entity> {
         const record = new this.Record();
         for (const [key, value] of Object.entries(entity)) {

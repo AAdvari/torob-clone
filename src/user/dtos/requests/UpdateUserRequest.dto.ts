@@ -1,6 +1,4 @@
-import {IsDefined, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Length} from "class-validator";
-import {IsValidPassword} from "../../../common/decorators/validate-password.decorator";
-import {UserType} from "../../enums/user-type.enum";
+import {IsEmail, IsNotEmpty, IsOptional, IsString} from "class-validator";
 
 export class UpdateUserRequestDto {
     @IsOptional()
