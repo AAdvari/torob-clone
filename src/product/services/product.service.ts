@@ -103,7 +103,7 @@ export class ProductService extends BaseService<Product> {
         const removingProduct = user.favoriteProducts.find(prod => prod.id === pid);
         if (!removingProduct)
             throw new BadRequestException('product with given id is not in favorite products!');
-        user.favoriteProducts.filter(prod => prod.id !== pid);
+        user.favoriteProducts = user.favoriteProducts.filter(prod => prod.id !== pid);
         await this.userService.save(user);
         return removingProduct;
     }

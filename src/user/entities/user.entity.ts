@@ -32,7 +32,7 @@ export class User extends BaseEntity<User> {
     userType: UserType;
 
 
-    @ManyToMany( () => Product, product => product.likedUsers)
+    @ManyToMany( () => Product, product => product.likedUsers, )
     @JoinTable()
     favoriteProducts: Product[];
 
