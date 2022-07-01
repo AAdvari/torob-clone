@@ -34,6 +34,18 @@ export class UserService extends BaseService<User> {
             .getOne();
     }
 
+    async getUserFavoriteProducts(userId: number) {
+        return  this.userRepository.createQueryBuilder('user')
+            .andWhere('user.id = :userId', {userId})
+            .leftJoinAndSelect('user.favoriteProducts', 'favoriteProduct')
+            .leftJoinAndSelect('favoriteProduct.sellingItems', 'sellingItem')
+            .leftJoinAndSelect('favoriteProduct.laptopProduct', 'laptopProduct')
+            .leftJoinAndSelect('favoriteProduct.mobileProduct', 'mobileProduct')
+            .leftJoinAndSelect('favoriteProduct.tabletProduct', 'tabletProduct')
+            .getOne();
+
+    }
+
     async findUserByUsername(username: string){
         return this.userRepository.findOneBy({username})
     }

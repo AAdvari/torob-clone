@@ -236,6 +236,26 @@ export class StoreService extends BaseService<Store> {
         }
         return products;
     }
-
-
+    async getFavoriteProducts(userId: number){
+        const user = await this.userService.getUserFavoriteProducts(userId);
+        return user.favoriteProducts;
+    }
+    async addProductToFavorites(pid: number, userId: number){
+        const user = await this.userService.findUserById(userId);
+        const product = await this.productRepository.findOneBy({id: pid});
+        if (!product)
+            throw new NotFoundException('product with given id does not exist!');
+        user.favoriteProducts.push(product);
+        await this.userService.save(user);
+        return product;
+    }
+    async deleteProductFromFavorites(pid: number, userId: number){
+        const user = await this.userService.findUserById(userId);
+        const removingProduct = user.favoriteProducts.find(prod => prod.id === pid);
+        if (!removingProduct)
+            throw new BadRequestException('product with given id is not in favorite products!');
+        user.favoriteProducts.filter(prod => prod.id !== pid);
+        await this.userService.save(user);
+        return removingProduct;
+    }
 }

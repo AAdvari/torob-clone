@@ -1,5 +1,5 @@
 import {BusinessController} from "../../common/decorators/bussines-controller.decorator";
-import {Body, Get, Param, ParseIntPipe, Post} from "@nestjs/common";
+import {Body, Delete, Get, Param, ParseIntPipe, Post} from "@nestjs/common";
 import {CreateStoreRequestDto} from "../dtos/requests/CreateStoreRequest.dto";
 import {GetUserId} from "../../common/decorators/get-user.id";
 import {Auth} from "../../common/decorators/auth-guard.decorator";
@@ -65,5 +65,24 @@ export class StoreController {
         return stores.map(store => new StoreResponseDto(store));
     }
 
+    @Auth()
+    @Post('add-product-to-favorites/:id')
+    async addToFavorites(@Param('id', ParseIntPipe) productId: number, @GetUserId() userId: number){
+        const product = await this.storeService.addProductToFavorites(productId, userId);
+        return new ProductResponseDto(product);
+    }
 
+    @Auth()
+    @Delete('delete-favorite/:id')
+    async deleteFromFavorites(@Param('id', ParseIntPipe) productId: number, @GetUserId() userId: number){
+        const product = await this.storeService.deleteProductFromFavorites(productId, userId);
+        return new ProductResponseDto(product);
+    }
+
+    @Auth()
+    @Get('get-favorite-products')
+    async getFavoriteProducts(@GetUserId() userId: number){
+        const products = await this.storeService.getFavoriteProducts(userId);
+        return products.map(prod => new ProductResponseDto(prod));
+    }
 }
