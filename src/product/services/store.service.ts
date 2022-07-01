@@ -67,12 +67,14 @@ export class StoreService extends BaseService<Store> {
     }
     async validateOwnershipAndGetStore(userId: number, storeId: number) {
         const user = await this.userService.findUserById(userId);
+        if (!user)
+            throw new BadRequestException('user does not exist!');
         if (user.userType !== UserType.SELLER)
             throw new UnauthorizedException('only seller users can add products!');
         const store = await this.storeRepository.findOne({
             where: {id: storeId},
             relations: {
-                sellingItems: true,
+                sellingItems: { product: true},
                 owner: true
             }
         });
@@ -84,7 +86,18 @@ export class StoreService extends BaseService<Store> {
     }
     async addExistingProductToStore(dto: AddProductToStoreByIdRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
-        const product = await this.productRepository.findOne({where: {id: dto.productId}});
+        const product = await this.productRepository.findOne({where: {id: dto.productId},
+        relations: {
+            tabletProduct: true,
+            laptopProduct: true,
+            mobileProduct: true
+        }});
+        if (!product)
+            throw new NotFoundException('product with given id does not exist');
+
+        if (store.sellingItems.find(si => si.product.id === product.id))
+            throw new BadRequestException('given product already exists is the store!');
+
 
         let sellingItem = new SellingItem();
         sellingItem.product = product;
@@ -98,10 +111,11 @@ export class StoreService extends BaseService<Store> {
     async addMobileTableToStore(dto: AddMobileTabletProductToStoreRequestDto, userId: number, type: ProductCategory) {
 
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
+
         let product = new Product();
         product.productCategory = type;
 
-        let device
+        let device;
         if (type === ProductCategory.MOBILE)
             device = new MobileProduct();
         else
@@ -167,7 +181,7 @@ export class StoreService extends BaseService<Store> {
         let query = this.storeRepository.createQueryBuilder('store')
             .andWhere('store.ownerId = :sellerId', {sellerId});
         if (stores)
-            query = query.andWhere('store.id IN (...:stores)', {stores});
+            query = query.andWhere('store.id IN (:...stores)', {stores});
 
         return await
             query.leftJoinAndSelect('store.sellingItems', 'sellingItem')
@@ -205,7 +219,7 @@ export class StoreService extends BaseService<Store> {
         let query = this.reportRepository.createQueryBuilder('report')
             .andWhere('owner.id = :sellerId', {sellerId});
             if (dto)
-                query = query.andWhere('store.id IN (...:stores)', {stores: dto.storeIds});
+                query = query.andWhere('store.id IN (:...stores)', {stores: dto.storeIds});
 
          return query
             .leftJoinAndSelect('report.sellingItem', 'sellingItem')

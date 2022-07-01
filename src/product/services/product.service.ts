@@ -16,8 +16,9 @@ export class ProductService extends BaseService<Product> {
     ) {
         super(productRepository);
     }
-    async getProductDetails(pid: number){
-        return  this.productRepository.createQueryBuilder('product')
+
+    async getProductDetails(pid: number) {
+        return this.productRepository.createQueryBuilder('product')
             .andWhere('product.id = :pid', {pid})
             .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
             .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
@@ -26,6 +27,7 @@ export class ProductService extends BaseService<Product> {
             .leftJoinAndSelect('sellingItem.store', 'store')
             .getOne();
     }
+
     async getFilteredProducts(dto: GetFilteredProductsRequestDto) {
         let query = this.productRepository.createQueryBuilder('product')
             .leftJoinAndSelect('product.sellingItems', 'sellingItem')
@@ -33,61 +35,60 @@ export class ProductService extends BaseService<Product> {
             .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
             .leftJoinAndSelect('product.laptopProduct', 'laptopProduct');
 
-        if (dto.categories) {
+        const {categories, mobileBrands, tabletBrands, laptopBrands, sortBy } = dto;
+        if (categories){
             query = query
-                .andWhere('product.productCategory IN (...:categories)', {categories: dto.categories});
+                .andWhere('product.productCategory IN (:...categories)', {categories});
         }
-
-        if (dto.mobileAndTabletBrands) {
-            query = query
-                .andWhere('mobileProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands})
-                .andWhere('tabletProduct.brand IN (...:brands)', {brands: dto.mobileAndTabletBrands});
-        }
-
-        if (dto.laptopBrands) {
-            query = query
-                .andWhere('laptopProduct.brand IN (...:brands)', {brands: dto.laptopBrands});
-        }
-
         let products = await query.getMany();
-        switch (dto.sortBy) {
-            case SortingTypes.PRICE_ASCENDING:
-                products =
-                    products.sort((p1, p2) => {
-                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
+        products =  products.filter(prod => {
+            return mobileBrands?.includes(prod.mobileProduct?.brand) ||
+                tabletBrands?.includes(prod.tabletProduct?.brand) ||
+                laptopBrands?.includes(prod.laptopProduct?.brand)
+        });
+
+        if (sortBy){
+            switch (sortBy) {
+                case SortingTypes.PRICE_ASCENDING:
+                    products =
+                        products.sort((p1, p2) => {
+                            const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
+                                return prev.price < curr.price ? prev : curr;
+                            });
+                            const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
+                                return prev.price < curr.price ? prev : curr;
+                            });
+                            return p1Cheapest.price - p2Cheapest.price;
                         });
-                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
+                    break;
+                case SortingTypes.PRICE_DESCENDING:
+                    products =
+                        products.sort((p1, p2) => {
+                            const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
+                                return prev.price < curr.price ? prev : curr;
+                            });
+                            const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
+                                return prev.price < curr.price ? prev : curr;
+                            });
+                            return p2Cheapest.price - p1Cheapest.price;
                         });
-                        return p1Cheapest.price - p2Cheapest.price;
-                    });
-                break;
-            case SortingTypes.PRICE_DESCENDING:
-                products =
-                    products.sort((p1, p2) => {
-                        const p1Cheapest = p1.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
-                        });
-                        const p2Cheapest = p2.sellingItems.reduce((prev, curr) => {
-                            return prev.price < curr.price ? prev : curr;
-                        });
-                        return p2Cheapest.price - p1Cheapest.price;
-                    });
-                break;
-            case SortingTypes.DATE_DESCENDING:
-                products = products.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime())
-                break;
-            case SortingTypes.DATE_ASCENDING:
-                products = products.sort((p1, p2) => p1.createdAt.getTime() - p2.createdAt.getTime())
+                    break;
+                case SortingTypes.DATE_DESCENDING:
+                    products = products.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime())
+                    break;
+                case SortingTypes.DATE_ASCENDING:
+                    products = products.sort((p1, p2) => p1.createdAt.getTime() - p2.createdAt.getTime())
+            }
         }
         return products;
     }
-    async getFavoriteProducts(userId: number){
+
+    async getFavoriteProducts(userId: number) {
         const user = await this.userService.getUserFavoriteProducts(userId);
         return user.favoriteProducts;
     }
-    async addProductToFavorites(pid: number, userId: number){
+
+    async addProductToFavorites(pid: number, userId: number) {
         const user = await this.userService.findUserById(userId);
         const product = await this.productRepository.findOneBy({id: pid});
         if (!product)
@@ -96,7 +97,8 @@ export class ProductService extends BaseService<Product> {
         await this.userService.save(user);
         return product;
     }
-    async deleteProductFromFavorites(pid: number, userId: number){
+
+    async deleteProductFromFavorites(pid: number, userId: number) {
         const user = await this.userService.findUserById(userId);
         const removingProduct = user.favoriteProducts.find(prod => prod.id === pid);
         if (!removingProduct)

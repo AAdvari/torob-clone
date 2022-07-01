@@ -10,10 +10,12 @@ export class AddProductToStoreByIdRequestDto {
 
     @IsNotEmpty()
     @IsNumber()
+    @IsPositive()
     price: number;
 
 
     @IsNotEmpty()
+    @IsNumber()
     @IsPositive()
     productId: number;
 

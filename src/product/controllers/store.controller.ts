@@ -62,8 +62,6 @@ export class StoreController {
         return stores.map(store => new StoreResponseDto(store));
     }
 
-
-
     @Auth()
     @Post('report-selling-item')
     async reportSellingItem(@Body() dto: ReportSellingItemRequestDto, @GetUserId() userId: number){

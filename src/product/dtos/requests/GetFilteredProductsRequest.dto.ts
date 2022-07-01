@@ -16,7 +16,13 @@ export class GetFilteredProductsRequestDto {
 
     @IsOptional()
     @IsEnum(MobileTabletBrand, {each: true})
-    mobileAndTabletBrands?: MobileTabletBrand[];
+    mobileBrands?: MobileTabletBrand[];
+
+
+    @IsOptional()
+    @IsEnum(MobileTabletBrand, {each: true})
+    tabletBrands?: MobileTabletBrand[];
+
 
     @IsOptional()
     @IsEnum(LaptopBrand, {each: true})
