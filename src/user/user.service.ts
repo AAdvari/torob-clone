@@ -36,8 +36,13 @@ export class UserService extends BaseService<User> {
 
     async updateUser(dto: UpdateUserRequestDto, userId: number){
         const user = await this.userRepository.findOneBy({id: userId});
-        if (dto.username)
+
+        if (dto.username){
+            const existingUser = await this.userRepository.findOneBy({username: dto.username});
+            if (existingUser && dto.username !== user.username)
+                throw new BadRequestException('given username is not currently available, try another one!');
             user.username = dto.username;
+        }
         if (dto.email)
             user.email = dto.email;
         if (dto.phoneNumber)

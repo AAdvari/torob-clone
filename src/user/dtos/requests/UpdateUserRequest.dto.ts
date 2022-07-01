@@ -1,4 +1,4 @@
-import {IsEmail, IsNotEmpty, IsOptional, IsString} from "class-validator";
+import {IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength} from "class-validator";
 
 export class UpdateUserRequestDto {
     @IsOptional()
@@ -10,6 +10,8 @@ export class UpdateUserRequestDto {
     @IsOptional()
     @IsNotEmpty()
     @IsString()
+    @MinLength(11)
+    @MaxLength(20)
     phoneNumber?: string;
 
 
