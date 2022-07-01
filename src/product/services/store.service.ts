@@ -3,7 +3,7 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {Repository} from "typeorm";
 import {Store} from "../entities/store.entity";
 import {CreateStoreRequestDto} from "../dtos/requests/CreateStoreRequest.dto";
-import {UserService} from "../../user/user.service";
+import {UserService} from "../../user/services/user.service";
 import {UserType} from "../../user/enums/user-type.enum";
 import {BaseService} from "../../common/base/Base.service";
 import {Product} from "../entities/product.entity";

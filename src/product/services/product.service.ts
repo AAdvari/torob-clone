@@ -1,6 +1,6 @@
 import {BadRequestException, Injectable, NotFoundException} from "@nestjs/common";
 import {BaseService} from "../../common/base/Base.service";
-import {UserService} from "../../user/user.service";
+import {UserService} from "../../user/services/user.service";
 import {InjectRepository} from "@nestjs/typeorm";
 import {Repository} from "typeorm";
 import {Product} from "../entities/product.entity";
