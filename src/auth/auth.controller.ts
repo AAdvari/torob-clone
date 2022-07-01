@@ -15,11 +15,4 @@ export class AuthController {
     async login(@Body() dto: LoginRequestDto){
         return this.authService.login(dto);
     }
-
-
-    @UseGuards(JwtAuthGuard)
-    @Get('test')
-    getUserInfo(@GetUserId() userId: number ){
-        return {userId};
-    }
 }
