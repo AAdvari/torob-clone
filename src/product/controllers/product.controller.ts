@@ -1,6 +1,6 @@
 import {BusinessController} from "../../common/decorators/bussines-controller.decorator";
 import {Auth} from "../../common/decorators/auth-guard.decorator";
-import {Body, Delete, Get, Param, ParseIntPipe, Post} from "@nestjs/common";
+import {Body, Delete, Get, Param, ParseIntPipe, Post, Query} from "@nestjs/common";
 import {GetUserId} from "../../common/decorators/get-user.id";
 import {ProductResponseDto} from "../dtos/responses/ProductResponse.dto";
 import {ProductService} from "../services/product.service";
@@ -19,6 +19,11 @@ export class ProductController {
         return products.map(prod => new ProductResponseDto(prod));
     }
 
+    @Get('get-products-by-search')
+    async getProductsBySearchClause(@Query() search: string){
+        const products = await this.productService.searchAndGetProducts(search);
+        return products.map(prod => new ProductResponseDto(prod));
+    }
     @Auth()
     @Post('add-product-to-favorites/:id')
     async addToFavorites(@Param('id', ParseIntPipe) productId: number, @GetUserId() userId: number){
@@ -45,4 +50,5 @@ export class ProductController {
         const product = await this.productService.getProductDetails(pid);
         return new ProductResponseDto(product);
     }
+
 }

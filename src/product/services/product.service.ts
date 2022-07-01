@@ -28,6 +28,19 @@ export class ProductService extends BaseService<Product> {
             .getOne();
     }
 
+    async searchAndGetProducts(clause) {
+        const {search} = clause;
+        return this.productRepository.createQueryBuilder('product')
+            .leftJoinAndSelect('product.sellingItems', 'sellingItem')
+            .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
+            .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
+            .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
+            .orWhere('mobileProduct.title LIKE :search', {search: `%${search}%`})
+            .orWhere('tabletProduct.title LIKE :search', {search: `%${search}%`})
+            .orWhere('laptopProduct.title LIKE :search', {search: `%${search}%`})
+            .getMany();
+    }
+
     async getFilteredProducts(dto: GetFilteredProductsRequestDto) {
         let query = this.productRepository.createQueryBuilder('product')
             .leftJoinAndSelect('product.sellingItems', 'sellingItem')
@@ -35,19 +48,19 @@ export class ProductService extends BaseService<Product> {
             .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
             .leftJoinAndSelect('product.laptopProduct', 'laptopProduct');
 
-        const {categories, mobileBrands, tabletBrands, laptopBrands, sortBy } = dto;
-        if (categories){
+        const {categories, mobileBrands, tabletBrands, laptopBrands, sortBy} = dto;
+        if (categories) {
             query = query
                 .andWhere('product.productCategory IN (:...categories)', {categories});
         }
         let products = await query.getMany();
-        products =  products.filter(prod => {
+        products = products.filter(prod => {
             return mobileBrands?.includes(prod.mobileProduct?.brand) ||
                 tabletBrands?.includes(prod.tabletProduct?.brand) ||
                 laptopBrands?.includes(prod.laptopProduct?.brand)
         });
 
-        if (sortBy){
+        if (sortBy) {
             switch (sortBy) {
                 case SortingTypes.PRICE_ASCENDING:
                     products =
