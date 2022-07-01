@@ -205,7 +205,7 @@ export class StoreService extends BaseService<Store> {
         report.description = dto.description;
         report.reportType = dto.reportType;
 
-        report = await this.sellingItemRepository.save(report);
+        report = await this.reportRepository.save(report);
         return report;
     }
     async getAllReports(sellerId: number){
