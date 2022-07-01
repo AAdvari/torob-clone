@@ -43,7 +43,8 @@ export class StoreService extends BaseService<Store> {
         if (user.userType !== UserType.SELLER)
             throw new UnauthorizedException('only seller users can add stores!');
 
-        if (user.stores.find(store => store.name === dto.name))
+        const existingStore = await this.storeRepository.findOneBy({name: dto.name});
+        if (existingStore)
             throw new BadRequestException('store with given name already exists');
 
         let store = new Store();
@@ -61,7 +62,6 @@ export class StoreService extends BaseService<Store> {
             }
         });
     }
-
     async validateOwnershipAndGetStore(userId: number, storeId: number) {
         const user = await this.userService.findUserById(userId);
         if (user.userType !== UserType.SELLER)
@@ -79,7 +79,6 @@ export class StoreService extends BaseService<Store> {
             throw new BadRequestException('the given user is not the owner of given store!')
         return store;
     }
-
     async addExistingProductToStore(dto: AddProductToStoreByIdRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
         const product = await this.productRepository.findOne({where: {id: dto.productId}});
@@ -93,7 +92,6 @@ export class StoreService extends BaseService<Store> {
 
         return product;
     }
-
     async addMobileTableToStore(dto: AddMobileTabletProductToStoreRequestDto, userId: number, type: ProductCategory) {
 
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
@@ -133,7 +131,6 @@ export class StoreService extends BaseService<Store> {
 
         return device;
     }
-
     async addLaptopToStore(dto: AddLaptopProductToStoreRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
 
@@ -163,7 +160,6 @@ export class StoreService extends BaseService<Store> {
         return device;
 
     }
-
     async getStoresWithDetails(sellerId: number, stores?: number[]) {
         let query = this.storeRepository.createQueryBuilder('store')
             .andWhere('store.ownerId = :sellerId', {sellerId});
@@ -178,7 +174,6 @@ export class StoreService extends BaseService<Store> {
                 .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
                 .getMany();
     }
-
     async getFilteredProducts(dto: GetFilteredProductsRequestDto) {
         let query = this.productRepository.createQueryBuilder('product')
             .leftJoinAndSelect('product.sellingItems', 'sellingItem')
@@ -257,5 +252,15 @@ export class StoreService extends BaseService<Store> {
         user.favoriteProducts.filter(prod => prod.id !== pid);
         await this.userService.save(user);
         return removingProduct;
+    }
+    async getProductDetails(pid: number){
+        return  this.productRepository.createQueryBuilder('product')
+            .andWhere('product.id = :pid', {pid})
+            .leftJoinAndSelect('product.laptopProduct', 'laptopProduct')
+            .leftJoinAndSelect('product.tabletProduct', 'tabletProduct')
+            .leftJoinAndSelect('product.mobileProduct', 'mobileProduct')
+            .leftJoinAndSelect('product.sellingItems', 'sellingItem')
+            .leftJoinAndSelect('sellingItem.store', 'store')
+            .getOne();
     }
 }

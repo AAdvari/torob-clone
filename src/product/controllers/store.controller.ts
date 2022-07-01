@@ -85,4 +85,10 @@ export class StoreController {
         const products = await this.storeService.getFavoriteProducts(userId);
         return products.map(prod => new ProductResponseDto(prod));
     }
+
+    @Get('get-detailed-product/:id')
+    async getDetailedProduct(@Param('id', ParseIntPipe) pid: number){
+        const product = await this.storeService.getProductDetails(pid);
+        return new ProductResponseDto(product);
+    }
 }
