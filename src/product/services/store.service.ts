@@ -18,11 +18,13 @@ import {AddProductToStoreByIdRequestDto} from "../dtos/requests/AddProductToStor
 import {Report} from "../entities/report.entity";
 import {ReportSellingItemRequestDto} from "../dtos/requests/ReportSellingItemRequest.dto";
 import {GetReportsRequestDto} from "../dtos/requests/GetReportsRequest.dto";
+import {ProductService} from "./product.service";
 
 @Injectable()
 export class StoreService extends BaseService<Store> {
     constructor(
         private readonly userService: UserService,
+        private readonly productService: ProductService,
         @InjectRepository(Store)
         private readonly storeRepository: Repository<Store>,
         @InjectRepository(SellingItem)
@@ -111,6 +113,7 @@ export class StoreService extends BaseService<Store> {
     async addMobileTableToStore(dto: AddMobileTabletProductToStoreRequestDto, userId: number, type: ProductCategory) {
 
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
+        await this.productService.checkProductTitle(dto.title);
 
         let product = new Product();
         product.productCategory = type;
@@ -150,6 +153,7 @@ export class StoreService extends BaseService<Store> {
     }
     async addLaptopToStore(dto: AddLaptopProductToStoreRequestDto, userId: number) {
         const store = await this.validateOwnershipAndGetStore(userId, dto.storeId);
+        await this.productService.checkProductTitle(dto.title);
 
         let product = new Product();
         product.productCategory = ProductCategory.LAPTOP;
