@@ -16,6 +16,8 @@ async function bootstrap() {
   if(process.env.SWAGGER_ENABLE === 'true')
     enableSwagger(app);
 
+  app.enableCors();
+
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
