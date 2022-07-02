@@ -144,6 +144,8 @@ export class ProductService extends BaseService<Product> {
     }
     async checkIfUserIsAdmin(userId: number){
         const user = await this.userService.findUserById(userId);
+        if (!user)
+            throw new NotFoundException('user not found!');
         if (user.userType !== UserType.ADMIN)
             throw new UnauthorizedException('only ADMINS can add products');
     }
